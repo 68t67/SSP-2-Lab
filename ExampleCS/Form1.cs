@@ -2,518 +2,415 @@
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
+using System.Data.OleDb;
 using System.Drawing;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
-using System.Data.OleDb;
 
 namespace ExampleCS
 {
     public partial class Form1 : Form
     {
+        private string connectingString = "provider=Microsoft.Jet.OLEDB.4.0;data source=Database1.mdb";
+        private OleDbConnection myConn;
+        private int newRowInd = -1;
+
         public Form1()
         {
             InitializeComponent();
-        }
-
-       
-
-        private void groupBox1_Enter(object sender, EventArgs e)
-        {
-
+            myConn = new OleDbConnection(connectingString);
         }
 
         private void button1_Click(object sender, EventArgs e)
         {
-            if (dataGridView1.SelectedRows.Count != 1)
-            {
-                MessageBox.Show("Выберете строку,которую хотите добвить", "Внимание !");
-            }
-            else
-            {
-                int index = dataGridView1.SelectedRows[0].Index;
-                for (int i = 0; i < dataGridView1.Columns.Count; i++)
-                {
-                    if (dataGridView1.Rows[index].Cells[i].Value == null)
-                    {
-
-                        MessageBox.Show("Не все данные введены", "Внимание !");
-                        return;
-                    }
-                }
-
-
-
-                string connectingString = "provider=Microsoft.Jet.OLEDB.4.0;data source=Database1.mdb";
-                OleDbConnection myConn = new OleDbConnection(connectingString);
-                //Сформировать строку запросов
-
-
-                try { 
-                    myConn.Open();
-
-
-                    string insertQuery = "INSERT INTO " + maskedTextBox1.Text + " VALUES (";
-                    for (int i = 0; i < dataGridView1.Columns.Count; i++)
-                    {
-
-                        if (int.TryParse(dataGridView1.Rows[index].Cells[i].Value.ToString(), out int o))
-                        {
-                            insertQuery += o;
-
-                        }
-                        else
-                        {
-                            insertQuery += "'" + dataGridView1.Rows[index].Cells[i].Value.ToString() + "'";
-
-                        }
-
-                        if (i < dataGridView1.Columns.Count - 1)
-                            insertQuery += ", ";
-                    }
-                    insertQuery += ")";
-
-
-                    OleDbCommand myCommand = new OleDbCommand(insertQuery, myConn);
-
-                    if (myCommand.ExecuteNonQuery() != 1)
-                    {
-                        MessageBox.Show("Ошибка выполнения запроса", "Внимание !");
-                    }
-                    else
-                    {
-                        MessageBox.Show("Данные Добавлены Успешно", "Внимание !");
-                    }
-            
-                }catch (Exception ex) {   
-                     MessageBox.Show("Ошибка при вставке в базу данных: " + ex.Message, "Внимание !");
-                }
-                finally
-                {
-                    myConn.Close();
-                }
-
-            }
+            AddRow();
         }
-
-        private int selectedRowIndex; // Поле для сохранения индекса выбранной строки
-        private int selectedColumnIndex; // Поле для сохранения индекса выбранного столбца
-
-        private void dataGridView1_CellContentClick(object sender, DataGridViewCellEventArgs e)
-        {
-            // Сохраняем индексы выбранной ячейки при каждом клике на ячейку
-            selectedRowIndex = e.RowIndex;
-            selectedColumnIndex = e.ColumnIndex;
-        }
-
-
 
         private void button2_Click(object sender, EventArgs e)
         {
-            if (dataGridView1.SelectedRows.Count != 1)
-            {
-                MessageBox.Show("Выберите строку которую хотите обновить", "Внимание !");
-            }
-            else
-            {
-                int index = dataGridView1.SelectedRows[0].Index;
-                int columnIndex = dataGridView1.CurrentCell.ColumnIndex;
-
-                if (columnIndex == 0)
-                {
-                    MessageBox.Show("Нельзя изменить первое поле", "Внимание !");
-                    return;
-                }
-
-                for (int i = 0; i < dataGridView1.Columns.Count; i++)
-                {
-                    if (dataGridView1.Rows[index].Cells[i].Value == null)
-                    {
-                        MessageBox.Show("Не все данные введены", "Внимание !");
-                        return;
-                    }
-                }
-
-                string connectingString = "provider=Microsoft.Jet.OLEDB.4.0;data source=Database1.mdb";
-                OleDbConnection myConn = new OleDbConnection(connectingString);
-
-                try
-                {
-                    myConn.Open();
-
-                    string updateQuery = "UPDATE " + maskedTextBox1.Text + " SET ";
-
-                    for (int i = 1; i < dataGridView1.Columns.Count; i++)
-                    {
-                        string columnName = dataGridView1.Columns[i].Name;
-
-                        if (int.TryParse(dataGridView1.Rows[index].Cells[i].Value.ToString(), out int o))
-                        {
-                            updateQuery += columnName + " = " + o;
-                        }
-                        else
-                        {
-                            updateQuery += columnName + " = '" + dataGridView1.Rows[index].Cells[i].Value.ToString() + "'";
-                        }
-
-                        if (i < dataGridView1.Columns.Count - 1)
-                            updateQuery += ", ";
-                    }
-
-                    updateQuery += " WHERE " + dataGridView1.Columns[0].Name +" = " + (index+1);
-
-                    OleDbCommand myCommand = new OleDbCommand(updateQuery, myConn);
-
-                    if (myCommand.ExecuteNonQuery() != 1)
-                    {
-                        MessageBox.Show("Ошибка выполнения запроса", "Внимание !");
-                    }
-                    else
-                    {
-                        MessageBox.Show("Данные обновлены успешно", "Внимание !");
-                    }
-                }
-                catch (Exception ex)
-                {
-                    MessageBox.Show("Ошибка при обновлении базы данных: " + ex.Message, "Внимание !");
-                }
-                finally
-                {
-                    myConn.Close();
-                }
-            }
+            UpdateRow();
         }
-
 
         private void button3_Click(object sender, EventArgs e)
         {
+            DeleteRow();
+        }
+
+        private void ToolStripMenuItem1_Click(object sender, EventArgs e)
+        {
+            LoadTable("Service");
+        }
+
+        private void ToolStripMenuItem2_Click(object sender, EventArgs e)
+        {
+            LoadTable("Products");
+        }
+
+        private void ToolStripMenuItem3_Click(object sender, EventArgs e)
+        {
+            LoadTable("ServiseProducts");
+        }
+
+        private void LoadTable(string tableName)
+        {
+            try
+            {
+
+                myConn.Open();
+                // Очищаем DataGridView перед загрузкой новых данных
+                dataGridView1.Columns.Clear();
+
+                // Создаем команду для получения метаданных о столбцах таблицы
+                OleDbCommand schemaCommand = myConn.CreateCommand();
+                schemaCommand.CommandText = $"SELECT TOP 1 * FROM {tableName}";
+
+                // Используем OleDbDataReader для получения метаданных
+                OleDbDataReader reader = schemaCommand.ExecuteReader(CommandBehavior.SchemaOnly);
+                DataTable schemaTable = reader.GetSchemaTable();
+
+                // Добавляем столбцы в DataGridView на основе информации о метаданных
+                foreach (DataRow row in schemaTable.Rows)
+                {
+                    string columnName = row["ColumnName"].ToString();
+                    Type dataType = (Type)row["DataType"];
+                    dataGridView1.Columns.Add(columnName, columnName);
+                    dataGridView1.Columns[columnName].ValueType = dataType; // Устанавливаем тип данных столбца
+                }
+
+                // Загружаем данные из таблицы
+                OleDbCommand dataCommand = myConn.CreateCommand();
+                dataCommand.CommandText = $"SELECT * FROM {tableName}";
+                OleDbDataAdapter dataAdapter = new OleDbDataAdapter(dataCommand);
+                DataTable dataTable = new DataTable();
+                dataAdapter.Fill(dataTable);
+
+                // Заполняем DataGridView данными из DataTable
+                foreach (DataRow row in dataTable.Rows)
+                {
+                    object[] rowData = row.ItemArray;
+                    dataGridView1.Rows.Add(rowData);
+                }
+
+                // Отключаем редактирование первого столбца (например, индекс 0)
+                if (dataGridView1.Columns.Count > 0)
+                {
+                    dataGridView1.Columns[0].ReadOnly = true;
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Ошибка при загрузке таблицы: " + ex.Message, "Внимание !");
+            }
+            finally
+            {
+                myConn.Close();
+            }
+        }
+
+        private void AddRow()
+        {
+            int index = GetSelectedRowIndex();
+            if (index == -1) return;
+
+            try
+            {
+                if (!CheckAllDataEntered(index)) return;
+
+                myConn.Open();
+                string insertQuery = GenerateInsertQuery(index);
+
+                OleDbCommand myCommand = new OleDbCommand(insertQuery, myConn);
+
+                if (myCommand.ExecuteNonQuery() != 1)
+                {
+                    MessageBox.Show("Ошибка выполнения запроса", "Внимание !");
+                }
+                else
+                {
+                    MessageBox.Show("Данные добавлены успешно", "Внимание !");
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Ошибка при добавлении строки: " + ex.Message, "Внимание !");
+            }
+            finally
+            {
+                myConn.Close();
+            }
+        }
+
+        private void UpdateRow()
+        {
+            int index = GetSelectedRowIndex();
+            if (index == -1) return;
+
+            try
+            {
+                if (!CheckAllDataEntered(index)) return;
+
+                myConn.Open();
+                string updateQuery = GenerateUpdateQuery(index);
+
+                OleDbCommand myCommand = new OleDbCommand(updateQuery, myConn);
+
+                if (myCommand.ExecuteNonQuery() != 1)
+                {
+                    MessageBox.Show("Ошибка выполнения запроса", "Внимание !");
+                }
+                else
+                {
+                    MessageBox.Show("Данные обновлены успешно", "Внимание !");
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Ошибка при обновлении строки: " + ex.Message, "Внимание !");
+            }
+            finally
+            {
+                myConn.Close();
+                //LoadTable(maskedTextBox1.Text);
+            }
+        }
+
+        private void DeleteRow()
+        {
+            int index = GetSelectedRowIndex();
+            if (index == -1) return;
+
+            try
+            {
+                if (!CheckAllDataEntered(index)) return;
+
+                myConn.Open();
+                int count = CheckRelatedRecords(index);
+
+                if (count > 0)
+                {
+                    DialogResult result = MessageBox.Show("Удаление этой записи приведет к удалению связанных записей. Продолжить?", "Предупреждение", MessageBoxButtons.YesNo);
+                    if (result == DialogResult.No) return;
+                }
+
+                string deleteQuery = GenerateDeleteQuery(index);
+
+                OleDbCommand myCommand = new OleDbCommand(deleteQuery, myConn);
+
+                if (myCommand.ExecuteNonQuery() != 1)
+                {
+                    MessageBox.Show("Ошибка выполнения запроса", "Внимание !");
+                }
+                else
+                {
+                    MessageBox.Show("Данные успешно удалены", "Внимание !");
+                    dataGridView1.Rows.RemoveAt(index);
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Ошибка при удалении строки: " + ex.Message, "Внимание !");
+            }
+            finally
+            {
+                myConn.Close();
+            }
+        }
+
+        private int GetSelectedRowIndex()
+        {
             if (dataGridView1.SelectedRows.Count != 1)
             {
-                MessageBox.Show("Выберете строку которую хотите удалить", "Внимание !");
-            }
-            else
-            {
-                int index = dataGridView1.SelectedRows[0].Index;
-                for (int i = 0; i < dataGridView1.Columns.Count; i++)
-                {
-                    if (dataGridView1.Rows[index].Cells[i].Value == null)
-                    {
-
-                        MessageBox.Show("Не все данные введены", "Внимание !");
-                        return;
-                    }
-                }
-
-
-
-                string connectingString = "provider=Microsoft.Jet.OLEDB.4.0;data source=Database1.mdb";
-                OleDbConnection myConn = new OleDbConnection(connectingString);
-                //Сформировать строку запросов
-
-
-                try
-                {
-                    myConn.Open();
-                    int count = 0;
-                    if (maskedTextBox1.Text == "Service") {
-                        string checkQuery = "SELECT COUNT(*) FROM ServiseProducts WHERE ServiceId = " + dataGridView1.Rows[index].Cells[0].Value.ToString();
-                        OleDbCommand checkCommand = new OleDbCommand(checkQuery, myConn);
-                        count = (int)checkCommand.ExecuteScalar();
-                    }
-                    else if(maskedTextBox1.Text == "Products") {
-                        string checkQuery = "SELECT COUNT(*) FROM ServiseProducts WHERE  ProductId = " + dataGridView1.Rows[index].Cells[0].Value.ToString();
-                        OleDbCommand checkCommand = new OleDbCommand(checkQuery, myConn);
-                        count = (int)checkCommand.ExecuteScalar();
-                    }
-                    // Проверить наличие связанных записей
-                    
-
-                    if (count > 0)
-                    {
-                        // Предупредить пользователя о наличии связанных записей
-                        DialogResult result = MessageBox.Show("Удаление этой записи приведет к удалению связанных записей. Продолжить?", "Предупреждение", MessageBoxButtons.YesNo);
-                        if (result == DialogResult.No)
-                        {
-                            // Пользователь отказался от каскадного удаления
-                            return;
-                        }else if(result == DialogResult.Yes)
-                        {
-                            string Query = "DELETE FROM " + maskedTextBox1.Text + " WHERE " + dataGridView1.Columns[0].Name + "= " + dataGridView1.Rows[index].Cells[0].Value.ToString();
-                            OleDbCommand myCommand = new OleDbCommand(Query, myConn);
-                            if (myCommand.ExecuteNonQuery() != 1)
-                            {
-                                MessageBox.Show("Ошибка выполнения запроса", "Внимание !");
-                            }
-                            else
-                            {
-                                MessageBox.Show("Данные Успешно Удалены", "Внимание !");
-                                dataGridView1.Rows.RemoveAt(index);
-                            }
-
-                        }
-                    }
-                    else
-                    {
-                        string Query = "DELETE FROM " + maskedTextBox1.Text + " WHERE " + dataGridView1.Columns[0].Name + "= " + dataGridView1.Rows[index].Cells[0].Value.ToString();
-                        OleDbCommand myCommand = new OleDbCommand(Query, myConn);
-                        if (myCommand.ExecuteNonQuery() != 1)
-                        {
-                            MessageBox.Show("Ошибка выполнения запроса", "Внимание !");
-                        }
-                        else
-                        {
-                            MessageBox.Show("Данные Успешно Удалены", "Внимание !");
-                            dataGridView1.Rows.RemoveAt(index);
-                        }
-                    }
-
-
-
-
-                    
-
-                }
-                catch (Exception ex)
-                {
-                    MessageBox.Show("Ошибка при вставке в базу данных: " + ex.Message, "Внимание !");
-                }
-                finally
-                {
-                    myConn.Close();
-                }
-
+                MessageBox.Show("Выберете строку, которую хотите обработать", "Внимание !");
+                return -1;
             }
 
-
+            return dataGridView1.SelectedRows[0].Index;
         }
 
-
-        private void выходToolStripMenuItem_Click(object sender, EventArgs e)
+        private bool CheckAllDataEntered(int rowIndex)
         {
-            Application.Exit();
-        }
-
-        private void выбратьТаблицуToolStripMenuItem_Click(object sender, EventArgs e)
-        {
-
-        }
-
-        private void перваяToolStripMenuItem1_Click(object sender, EventArgs e)
-        {
-            string connectingString = "provider=Microsoft.Jet.OLEDB.4.0;data source=Database1.mdb";
-            OleDbConnection myConn = new OleDbConnection(connectingString);
-            try
+            for (int i = 0; i < dataGridView1.Columns.Count; i++)
             {
-               
-                //Сформировать строку запросов
-                string selectString = "Select * from Service";
-                OleDbCommand myCommand = myConn.CreateCommand();
-                myCommand.CommandText = selectString;
-                OleDbDataAdapter oda = new OleDbDataAdapter();
-                oda.SelectCommand = myCommand;
-                DataSet myDataset = new DataSet();
-                myConn.Open();
-                string dataTableName = "CompanyA";
-                oda.Fill(myDataset, dataTableName);
-                DataTable myDataTable = myDataset.Tables[dataTableName];
-                if (dataGridView1.Columns.Count > 0 && maskedTextBox1.Text != null)
+                if (dataGridView1.Rows[rowIndex].Cells[i].Value == null)
                 {
-                    // Если есть, удаляем все столбцы
-                    dataGridView1.Columns.Clear();
-                    maskedTextBox1.Clear();
-                    foreach (DataColumn cl in myDataTable.Columns)
-                    {
-                        string columnName = cl.ColumnName;
-                        dataGridView1.Columns.Add(columnName, columnName);
-                        maskedTextBox1.Text = "Service";
-                    }
+                    MessageBox.Show("Не все данные введены", "Внимание !");
+                    return false;
+                }
+            }
+            return true;
+        }
+
+        private int CheckRelatedRecords(int index)
+        {
+            int count = 0;
+            string columnName = maskedTextBox1.Text == "Service" ? "ServiceId" : "ProductId";
+            string checkQuery = "SELECT COUNT(*) FROM ServiseProducts WHERE " + columnName + " = " + dataGridView1.Rows[index].Cells[0].Value.ToString();
+
+            OleDbCommand checkCommand = new OleDbCommand(checkQuery, myConn);
+            count = (int)checkCommand.ExecuteScalar();
+
+            return count;
+        }
+
+        private string GenerateInsertQuery(int index)
+        {
+            string insertQuery = "INSERT INTO " + maskedTextBox1.Text + " VALUES (";
+            for (int i = 0; i < dataGridView1.Columns.Count; i++)
+            {
+                if (int.TryParse(dataGridView1.Rows[index].Cells[i].Value.ToString(), out int o))
+                {
+                    insertQuery += o;
+
                 }
                 else
                 {
-                    foreach (DataColumn cl in myDataTable.Columns)
-                    {
-                        string columnName = cl.ColumnName;
-                        dataGridView1.Columns.Add(columnName, columnName);
-                        maskedTextBox1.Text = "Service";
-                    }
+                    insertQuery += "'" + dataGridView1.Rows[index].Cells[i].Value.ToString() + "'";
+
                 }
 
-                foreach (DataRow row in myDataTable.Rows)
+                if (i < dataGridView1.Columns.Count - 1)
+                    insertQuery += ", ";
+            }
+            insertQuery += ")";
+
+            return insertQuery;
+        }
+
+        private string GenerateUpdateQuery(int index)
+        {
+            string updateQuery = "UPDATE " + maskedTextBox1.Text + " SET ";
+
+            for (int i = 1; i < dataGridView1.Columns.Count; i++)
+            {
+                string columnName = dataGridView1.Columns[i].Name;
+
+                if (int.TryParse(dataGridView1.Rows[index].Cells[i].Value.ToString(), out int o))
                 {
-                    // Создаем массив объектов для хранения значений ячеек строки
-                    object[] rowData = new object[myDataTable.Columns.Count];
+                    updateQuery += columnName + " = " + o;
+                }
+                else
+                {
+                    updateQuery += columnName + " = '" + dataGridView1.Rows[index].Cells[i].Value.ToString() + "'";
+                }
 
-                    // Заполняем массив значениями ячеек строки
-                    for (int i = 0; i < myDataTable.Columns.Count; i++)
+                if (i < dataGridView1.Columns.Count - 1)
+                    updateQuery += ", ";
+            }
+
+            if (int.TryParse(dataGridView1.Rows[index].Cells[0].Value.ToString(), out int q))
+            {
+                updateQuery += " WHERE " + dataGridView1.Columns[0].Name + " = " + q;
+            }
+
+            return updateQuery;
+        }
+
+        private string GenerateDeleteQuery(int index)
+        {
+            return "DELETE FROM " + maskedTextBox1.Text + " WHERE " + dataGridView1.Columns[0].Name + "= " + dataGridView1.Rows[index].Cells[0].Value.ToString();
+        }
+        private void DataGridView1_CellEndEdit(object sender, DataGridViewCellEventArgs e)
+        {
+            SaveChanges();
+        }
+
+        private void SaveChanges()
+        {
+            int rowIndex = dataGridView1.CurrentRow.Index;
+            if (rowIndex == -1)
+            {
+                return;
+            }
+
+            try
+            {
+                if (newRowInd != rowIndex)
+                {
+                    DialogResult result = MessageBox.Show("Сохранить внесённые изменения?", "Предупреждение", MessageBoxButtons.YesNo);
+                    if (result == DialogResult.No) 
                     {
-                        rowData[i] = row[i];
+                        return; 
                     }
-
-                    // Добавляем новую строку в DataGridView и заполняем ее данными
-                    dataGridView1.Rows.Add(rowData);
+                    dataGridView1.Rows[rowIndex].Selected = true;
+                    UpdateRow();
                 }
             }
             catch (Exception ex)
             {
-                MessageBox.Show("Ошибка при вставке в базу данных: " + ex.Message, "Внимание !");
+                MessageBox.Show("Ошибка при сохранении изменений: " + ex.Message, "Внимание !");
             }
-            finally
-            {
-                myConn.Close();
-            }
-
         }
 
-        
-
-
-        private void втораяToolStripMenuItem1_Click(object sender, EventArgs e)
+        private void dataGridView1_CellBeginEdit(object sender, DataGridViewCellCancelEventArgs e)
         {
-            string connectingString = "provider=Microsoft.Jet.OLEDB.4.0;data source=Database1.mdb";
-            OleDbConnection myConn = new OleDbConnection(connectingString);
+            newRowInd = dataGridView1.Rows[e.RowIndex].IsNewRow ? e.RowIndex : -1;
+        }
+
+        private void dataGridView1_RowValidated(object sender, DataGridViewCellEventArgs e)
+        {
+            DataGridViewRow row = dataGridView1.Rows[e.RowIndex];
+
+            if (row.IsNewRow)
+            {
+                DialogResult result = MessageBox.Show("Сохранить новую строку?", "Предупреждение", MessageBoxButtons.YesNo);
+                if (result == DialogResult.No)
+                {
+                    return;
+                }
+                //SaveNewRowData(row);
+            }
+        }
+
+        private void SaveNewRowData(DataGridViewRow row)
+        {
+            // Получаем данные из ячеек новой строки и сохраняем их в базу данных
             try
             {
-
-                //Сформировать строку запросов
-                string selectString = "Select * from Products";
-                OleDbCommand myCommand = myConn.CreateCommand();
-                myCommand.CommandText = selectString;
-                OleDbDataAdapter oda = new OleDbDataAdapter();
-                oda.SelectCommand = myCommand;
-                DataSet myDataset = new DataSet();
-                myConn.Open();
-                string dataTableName = "CompanyA";
-                oda.Fill(myDataset, dataTableName);
-                DataTable myDataTable = myDataset.Tables[dataTableName];
-                if (dataGridView1.Columns.Count > 0 && maskedTextBox1.Text != null)
-                {
-                    // Если есть, удаляем все столбцы
-                    dataGridView1.Columns.Clear();
-                    maskedTextBox1.Clear();
-                    foreach (DataColumn cl in myDataTable.Columns)
-                    {
-                        string columnName = cl.ColumnName;
-                        dataGridView1.Columns.Add(columnName, columnName);
-                        maskedTextBox1.Text = "Products";
-                    }
-                }
-                else
-                {
-                    foreach (DataColumn cl in myDataTable.Columns)
-                    {
-                        string columnName = cl.ColumnName;
-                        dataGridView1.Columns.Add(columnName, columnName);
-                        maskedTextBox1.Text = "Products";
-                    }
-                }
-
-                foreach (DataRow row in myDataTable.Rows)
-                {
-                    // Создаем массив объектов для хранения значений ячеек строки
-                    object[] rowData = new object[myDataTable.Columns.Count];
-
-                    // Заполняем массив значениями ячеек строки
-                    for (int i = 0; i < myDataTable.Columns.Count; i++)
-                    {
-                        rowData[i] = row[i];
-                    }
-
-                    // Добавляем новую строку в DataGridView и заполняем ее данными
-                    dataGridView1.Rows.Add(rowData);
-                }
+                // Ваш код для сохранения данных в базу данных
             }
             catch (Exception ex)
             {
-                MessageBox.Show("Ошибка при вставке в базу данных: " + ex.Message, "Внимание !");
-            }
-            finally
-            {
-                myConn.Close();
+                MessageBox.Show("Ошибка при сохранении новой строки: " + ex.Message, "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
 
-        
-
-        private void третьяToolStripMenuItem1_Click(object sender, EventArgs e)
+        private void dataGridView1_CellValidating(object sender, DataGridViewCellValidatingEventArgs e)
         {
-            string connectingString = "provider=Microsoft.Jet.OLEDB.4.0;data source=Database1.mdb";
-            OleDbConnection myConn = new OleDbConnection(connectingString);
-            try
+            // Проверяем только ячейки, которые содержат данные
+            if (e.RowIndex >= 0 && e.ColumnIndex >= 0)
             {
+                // Получаем тип данных для текущей ячейки
+                Type dataType = dataGridView1.Columns[e.ColumnIndex].ValueType;
 
-                //Сформировать строку запросов
-                string selectString = "Select * from ServiseProducts";
-                OleDbCommand myCommand = myConn.CreateCommand();
-                myCommand.CommandText = selectString;
-                OleDbDataAdapter oda = new OleDbDataAdapter();
-                oda.SelectCommand = myCommand;
-                DataSet myDataset = new DataSet();
-                myConn.Open();
-                string dataTableName = "CompanyA";
-                oda.Fill(myDataset, dataTableName);
-                DataTable myDataTable = myDataset.Tables[dataTableName];
-                if (dataGridView1.Columns.Count > 0 && maskedTextBox1.Text != null)
+                // Получаем введенное пользователем значение
+                string userInput = e.FormattedValue.ToString();
+
+                // Выполняем проверку в зависимости от типа данных
+                if (dataType == typeof(int))
                 {
-                    // Если есть, удаляем все столбцы
-                    dataGridView1.Columns.Clear();
-                    maskedTextBox1.Clear();
-                    foreach (DataColumn cl in myDataTable.Columns)
+                    // Проверка для целочисленных значений
+                    int parsedValue;
+                    if (!int.TryParse(userInput, out parsedValue))
                     {
-                        string columnName = cl.ColumnName;
-                        dataGridView1.Columns.Add(columnName, columnName);
-                        maskedTextBox1.Text = "ServiseProducts";
+                        e.Cancel = true; // Отменяем редактирование ячейки
+                        MessageBox.Show("Введите целочисленное значение.", "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
                     }
                 }
-                else
+                else if (dataType == typeof(DateTime))
                 {
-                    foreach (DataColumn cl in myDataTable.Columns)
+                    // Проверка для значений типа DateTime
+                    DateTime parsedDate;
+                    if (!DateTime.TryParse(userInput, out parsedDate))
                     {
-                        string columnName = cl.ColumnName;
-                        dataGridView1.Columns.Add(columnName, columnName);
-                        maskedTextBox1.Text = "ServiseProducts";
+                        e.Cancel = true; // Отменяем редактирование ячейки
+                        MessageBox.Show("Введите корректную дату и время.", "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
                     }
                 }
-
-                foreach (DataRow row in myDataTable.Rows)
-                {
-                    // Создаем массив объектов для хранения значений ячеек строки
-                    object[] rowData = new object[myDataTable.Columns.Count];
-
-                    // Заполняем массив значениями ячеек строки
-                    for (int i = 0; i < myDataTable.Columns.Count; i++)
-                    {
-                        rowData[i] = row[i];
-                    }
-
-                    // Добавляем новую строку в DataGridView и заполняем ее данными
-                    dataGridView1.Rows.Add(rowData);
-                }
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show("Ошибка при вставке в базу данных: " + ex.Message, "Внимание !");
-            }
-            finally
-            {
-                myConn.Close();
+                // Добавьте другие проверки в соответствии с вашими требованиями
             }
         }
 
-        private void label1_Click(object sender, EventArgs e)
-        {
-
-        }
-
-        private void maskedTextBox1_MaskInputRejected(object sender, MaskInputRejectedEventArgs e)
-        {
-
-        }
-
-        private void Form1_Load(object sender, EventArgs e)
-        {
-
-        }
     }
 }

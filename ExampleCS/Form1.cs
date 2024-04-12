@@ -313,9 +313,10 @@ namespace ExampleCS
         }
         private void DataGridView1_CellEndEdit(object sender, DataGridViewCellEventArgs e)
         {
-            SaveChanges();
+            
+            //SaveChanges();
         }
-
+/*
         private void SaveChanges()
         {
             int rowIndex = dataGridView1.CurrentRow.Index;
@@ -341,14 +342,14 @@ namespace ExampleCS
             {
                 MessageBox.Show("Ошибка при сохранении изменений: " + ex.Message, "Внимание !");
             }
-        }
+        }*/
 
-        private void dataGridView1_CellBeginEdit(object sender, DataGridViewCellCancelEventArgs e)
+/*        private void dataGridView1_CellBeginEdit(object sender, DataGridViewCellCancelEventArgs e)
         {
             newRowInd = dataGridView1.Rows[e.RowIndex].IsNewRow ? e.RowIndex : -1;
-        }
+        }*/
 
-        private void dataGridView1_RowValidated(object sender, DataGridViewCellEventArgs e)
+     /*   private void dataGridView1_RowValidated(object sender, DataGridViewCellEventArgs e)
         {
             DataGridViewRow row = dataGridView1.Rows[e.RowIndex];
 
@@ -361,54 +362,70 @@ namespace ExampleCS
                 }
                 //SaveNewRowData(row);
             }
-        }
-
-        private void SaveNewRowData(DataGridViewRow row)
-        {
-            // Получаем данные из ячеек новой строки и сохраняем их в базу данных
-            try
-            {
-                // Ваш код для сохранения данных в базу данных
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show("Ошибка при сохранении новой строки: " + ex.Message, "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
-            }
-        }
+        }*/
 
         private void dataGridView1_CellValidating(object sender, DataGridViewCellValidatingEventArgs e)
         {
-            // Проверяем только ячейки, которые содержат данные
             if (e.RowIndex >= 0 && e.ColumnIndex >= 0)
             {
-                // Получаем тип данных для текущей ячейки
                 Type dataType = dataGridView1.Columns[e.ColumnIndex].ValueType;
 
-                // Получаем введенное пользователем значение
                 string userInput = e.FormattedValue.ToString();
 
-                // Выполняем проверку в зависимости от типа данных
                 if (dataType == typeof(int))
                 {
-                    // Проверка для целочисленных значений
                     int parsedValue;
                     if (!int.TryParse(userInput, out parsedValue))
                     {
-                        e.Cancel = true; // Отменяем редактирование ячейки
+                        e.Cancel = true;
                         MessageBox.Show("Введите целочисленное значение.", "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    }
+                }
+                else if (dataType == typeof(double))
+                {
+                    double parsedValue;
+                    if (!double.TryParse(userInput, out parsedValue))
+                    {
+                        e.Cancel = true;
+                        MessageBox.Show("Введите число с плавающей точкой.", "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
                     }
                 }
                 else if (dataType == typeof(DateTime))
                 {
-                    // Проверка для значений типа DateTime
                     DateTime parsedDate;
                     if (!DateTime.TryParse(userInput, out parsedDate))
                     {
-                        e.Cancel = true; // Отменяем редактирование ячейки
+                        e.Cancel = true;
                         MessageBox.Show("Введите корректную дату и время.", "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
                     }
                 }
-                // Добавьте другие проверки в соответствии с вашими требованиями
+                else if (dataType == typeof(bool))
+                {
+                    bool parsedValue;
+                    if (!bool.TryParse(userInput, out parsedValue))
+                    {
+                        e.Cancel = true;
+                        MessageBox.Show("Введите значение true или false.", "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    }
+                }
+                else if (dataType == typeof(TimeSpan))
+                {
+                    TimeSpan parsedValue;
+                    if (!TimeSpan.TryParse(userInput, out parsedValue))
+                    {
+                        e.Cancel = true;
+                        MessageBox.Show("Введите корректное значение временного интервала.", "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    }
+                }
+                else if (dataType == typeof(byte))
+                {
+                    byte parsedValue;
+                    if (!byte.TryParse(userInput, out parsedValue))
+                    {
+                        e.Cancel = true;
+                        MessageBox.Show("Введите целое число от 0 до 255.", "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    }
+                }
             }
         }
 

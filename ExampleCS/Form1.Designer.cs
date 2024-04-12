@@ -156,7 +156,7 @@ namespace ExampleCS
             this.dataGridView1.RowTemplate.Height = 24;
             this.dataGridView1.Size = new System.Drawing.Size(871, 374);
             this.dataGridView1.TabIndex = 2;
-            this.dataGridView1.RowValidated += dataGridView1_RowValidated;
+            //this.dataGridView1.RowValidated += dataGridView1_RowValidated;
             this.dataGridView1.CellEndEdit += DataGridView1_CellEndEdit;
             this.dataGridView1.CellValidating += dataGridView1_CellValidating;
             // 
